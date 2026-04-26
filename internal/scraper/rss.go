@@ -46,6 +46,11 @@ func fetchRSS(source models.Source) ([]models.Article, error) {
 			a.ImageURL = item.Image.URL
 		}
 
+		// Strip useless HN summary
+		if a.Summary == "Comments" || a.Summary == "<p>Comments</p>" {
+			a.Summary = ""
+		}
+
 		articles = append(articles, a)
 	}
 

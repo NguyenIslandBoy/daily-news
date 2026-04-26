@@ -15,6 +15,7 @@ func NewRouter(pool *pgxpool.Pool, engine *scraper.Engine, apiKey string) *gin.E
 	topics := NewTopicsHandler(pool)
 	stats := NewStatsHandler(pool)
 	auth := APIKeyAuth(apiKey)
+	sources := NewSourcesHandler(pool)
 
 	r.GET("/api/articles", articles.List)
 	r.GET("/api/articles/:id", articles.Get)
@@ -25,6 +26,8 @@ func NewRouter(pool *pgxpool.Pool, engine *scraper.Engine, apiKey string) *gin.E
 	r.DELETE("/api/topics/:id", auth, topics.Delete)
 
 	r.GET("/api/stats", stats.Get)
+
+	r.GET("/api/sources", sources.List)
 
 	r.GET("/api/health", func(c *gin.Context) {
 		if err := pool.Ping(c.Request.Context()); err != nil {
@@ -39,6 +42,13 @@ func NewRouter(pool *pgxpool.Pool, engine *scraper.Engine, apiKey string) *gin.E
 			"db":          "ok",
 			"last_scrape": engine.LastScrape(),
 		})
+	})
+
+	// Serve React frontend static files
+	r.Static("/assets", "./static/assets")
+	r.StaticFile("/", "./static/index.html")
+	r.NoRoute(func(c *gin.Context) {
+		c.File("./static/index.html")
 	})
 
 	return r
