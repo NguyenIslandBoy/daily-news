@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/NguyenIslandBoy/daily-news/internal/models"
@@ -46,8 +47,11 @@ func fetchRSS(source models.Source) ([]models.Article, error) {
 			a.ImageURL = item.Image.URL
 		}
 
+		a.Summary = item.Description
 		// Strip useless HN summary
-		if a.Summary == "Comments" || a.Summary == "<p>Comments</p>" {
+		if a.Summary == "Comments" ||
+			a.Summary == "<p>Comments</p>" ||
+			strings.Contains(a.Summary, ">Comments</a>") {
 			a.Summary = ""
 		}
 

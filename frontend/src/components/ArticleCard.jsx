@@ -13,7 +13,7 @@ const CATEGORY_COLORS = {
   default:  'bg-gray-800 text-gray-400',
 }
 
-export default function ArticleCard({ article: a, topics = [] }) {
+export default function ArticleCard({ article: a, topics = [], dark = true }) {
   const [expanded, setExpanded] = useState(false)
   const [related,  setRelated]  = useState(null)
 
@@ -30,7 +30,10 @@ export default function ArticleCard({ article: a, topics = [] }) {
   }
 
   return (
-    <article className="rounded-lg bg-gray-900 border border-gray-800 p-4 hover:border-gray-700 transition-colors">
+    <article className={`rounded-lg border p-4 transition-colors
+        ${dark
+        ? 'bg-gray-900 border-gray-800 hover:border-gray-700'
+        : 'bg-white border-gray-200 hover:border-gray-300'}`}>
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           {/* Meta row */}
@@ -38,11 +41,11 @@ export default function ArticleCard({ article: a, topics = [] }) {
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${color}`}>
               {label}
             </span>
-            <span className="text-xs text-gray-500">{a.source_name}</span>
+            <span className={`text-xs ${dark ? 'text-gray-500' : 'text-gray-400'}`}>{a.source_name}</span>
             {a.author && (
-              <span className="text-xs text-gray-600">· {a.author}</span>
+              <span className={`text-xs ${dark ? 'text-gray-600' : 'text-gray-400'}`}>· {a.author}</span>
             )}
-            <span className="text-xs text-gray-600 ml-auto">
+            <span className={`text-xs ml-auto ${dark ? 'text-gray-600' : 'text-gray-400'}`}>
               {dayjs(a.published_at).fromNow()}
             </span>
           </div>
@@ -52,14 +55,15 @@ export default function ArticleCard({ article: a, topics = [] }) {
             href={a.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm font-semibold text-gray-100 hover:text-blue-400 transition-colors leading-snug block mb-2"
+            className={`text-sm font-semibold hover:text-blue-400 transition-colors leading-snug block mb-2
+                ${dark ? 'text-gray-100' : 'text-gray-900'}`}
           >
             {a.title}
           </a>
 
           {/* Summary */}
           {a.summary && (
-            <p className="text-xs text-gray-400 leading-relaxed line-clamp-2">
+            <p className={`text-xs leading-relaxed line-clamp-2 ${dark ? 'text-gray-400' : 'text-gray-500'}`}>
               {a.summary.replace(/<[^>]+>/g, '')}
             </p>
           )}

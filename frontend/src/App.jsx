@@ -10,6 +10,11 @@ export default function App() {
   const [selectedSource, setSelectedSource] = useState(null)
   const [search,       setSearch]       = useState('')
   const [searchInput,  setSearchInput]  = useState('')
+  const [dark, setDark] = useState(true)
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', dark)
+  }, [dark])
 
   useEffect(() => {
     getTopics().then(d  => setTopics(d.topics   || []))
@@ -23,9 +28,15 @@ export default function App() {
   }, [searchInput])
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
+    <div className={`min-h-screen transition-colors ${dark ? 'bg-gray-950 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-gray-900 border-b border-gray-800 px-6 py-3 flex items-center gap-4">
+      <header className={`sticky top-0 z-10 border-b px-6 py-3 flex items-center gap-4 ${dark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
+        <button
+          onClick={() => setDark(d => !d)}
+          className="ml-2 px-3 py-1.5 rounded-md bg-gray-800 text-sm text-gray-400 hover:bg-gray-700 transition-colors"
+        >
+          {dark ? '☀️' : '🌙'}
+        </button>
         <h1 className="text-lg font-bold tracking-tight text-white">🗞 Daily News</h1>
         <input
           type="text"
@@ -37,12 +48,14 @@ export default function App() {
       </header>
 
       {/* Filter chips */}
-      <div className="px-6 py-3 flex flex-wrap gap-2 border-b border-gray-800 bg-gray-900">
+      <div className={`px-6 py-3 flex flex-wrap gap-2 border-b ${dark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
         {/* Topic filters */}
         <button
           onClick={() => setSelectedTopic(null)}
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors
-            ${selectedTopic === null ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+            ${selectedTopic === null
+              ? 'bg-blue-600 text-white'
+              : dark ? 'bg-gray-800 text-gray-400 hover:bg-gray-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
         >
           All Topics
         </button>
@@ -66,7 +79,7 @@ export default function App() {
         <button
           onClick={() => setSelectedSource(null)}
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors
-            ${selectedSource === null ? 'bg-violet-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+            ${selectedSource === null ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
         >
           All Sources
         </button>
@@ -75,7 +88,7 @@ export default function App() {
             key={s.id}
             onClick={() => setSelectedSource(selectedSource === s.id ? null : s.id)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors
-              ${selectedSource === s.id ? 'bg-violet-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
+              ${selectedSource === s.id ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
           >
             {s.name}
           </button>
@@ -90,10 +103,11 @@ export default function App() {
             source={selectedSource}
             search={search}
             topics={topics}
+            dark={dark}
           />
         </main>
         <aside className="w-80 shrink-0 hidden lg:block">
-          <StatsPanel />
+          <StatsPanel dark={dark} />
         </aside>
       </div>
     </div>

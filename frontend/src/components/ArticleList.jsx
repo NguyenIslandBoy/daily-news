@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { getArticles } from '../api'
 import ArticleCard from './ArticleCard'
 
-export default function ArticleList({ topic, source, search, topics }) {
+export default function ArticleList({ topic, source, search, topics, dark }) {
   const [articles, setArticles] = useState([])
   const [page,     setPage]     = useState(1)
   const [pages,    setPages]    = useState(1)
@@ -28,7 +28,7 @@ export default function ArticleList({ topic, source, search, topics }) {
 
       <div className="flex flex-col gap-3">
         {articles.map(a => (
-          <ArticleCard key={a.id} article={a} topics={topics} />
+          <ArticleCard key={a.id} article={a} topics={topics} dark={dark} />
         ))}
       </div>
 
