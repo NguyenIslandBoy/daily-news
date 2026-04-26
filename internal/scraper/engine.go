@@ -96,14 +96,23 @@ func (e *Engine) scrapeSource(source models.Source) {
 
 		a.TopicID = e.matcher.Match(a.Title, a.Summary)
 
-		ok, err := db.InsertArticle(e.pool, a)
+		id, err := db.InsertArticle(e.pool, a)
 		if err != nil {
 			log.Printf("[%s] Insert error: %v", source.Name, err)
 			continue
 		}
-		if ok {
+		if id > 0 {
 			e.dedup.Mark(a.URL)
 			inserted++
+			a.ID = id
+
+			relatedIDs, err := db.FindCandidateIDs(e.pool, a)
+			if err != nil {
+				log.Printf("[%s] Relations error: %v", source.Name, err)
+			} else if len(relatedIDs) > 0 {
+				db.InsertRelations(e.pool, id, relatedIDs)
+				log.Printf("[%s] %d relations inserted for article %d", source.Name, len(relatedIDs), id)
+			}
 		}
 
 		time.Sleep(200 * time.Millisecond)

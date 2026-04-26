@@ -18,19 +18,25 @@ func URLHash(url string) string {
 
 // InsertArticle inserts an article, skipping duplicates.
 // Returns true if the article was newly inserted, false if it already existed.
-func InsertArticle(pool *pgxpool.Pool, a models.Article) (bool, error) {
-	tag, err := pool.Exec(context.Background(),
+func InsertArticle(pool *pgxpool.Pool, a models.Article) (int, error) {
+	var id int
+	err := pool.QueryRow(context.Background(),
 		`INSERT INTO articles
 			(url, url_hash, title, summary, author, published_at, source_id, topic_id, category, image_url)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		 ON CONFLICT (url) DO NOTHING`,
+		 ON CONFLICT (url) DO NOTHING
+		 RETURNING id`,
 		a.URL, URLHash(a.URL), a.Title, a.Summary, a.Author,
 		a.PublishedAt, a.SourceID, a.TopicID, a.Category, a.ImageURL,
-	)
+	).Scan(&id)
 	if err != nil {
-		return false, err
+		// ON CONFLICT DO NOTHING returns no rows — not a real error
+		if err.Error() == "no rows in result set" {
+			return 0, nil
+		}
+		return 0, err
 	}
-	return tag.RowsAffected() == 1, nil
+	return id, nil
 }
 
 // WarmSeenSet loads url_hashes from the last 24h into memory.

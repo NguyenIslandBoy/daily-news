@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/NguyenIslandBoy/daily-news/internal/db"
+	"github.com/NguyenIslandBoy/daily-news/internal/models"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -84,5 +85,16 @@ func (h *ArticlesHandler) Get(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"article": article})
+	related, err := db.GetRelatedArticles(h.pool, id)
+	if err != nil {
+		related = []models.Article{} // non-fatal
+	}
+	if related == nil {
+		related = []models.Article{}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"article": article,
+		"related": related,
+	})
 }
