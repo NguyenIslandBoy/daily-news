@@ -35,6 +35,10 @@ func fetchRSS(source models.Source) ([]models.Article, error) {
 		if item.Author != nil {
 			a.Author = item.Author.Name
 		}
+		// After setting a.Author
+		if len(a.Author) > 500 {
+			a.Author = a.Author[:500]
+		}
 
 		if item.PublishedParsed != nil {
 			a.PublishedAt = item.PublishedParsed

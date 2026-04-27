@@ -14,40 +14,71 @@ export default function ArticleList({ topic, source, search, topics, dark }) {
     const data = await getArticles({ topic, source, q: search, page: p, limit: 20 })
     setArticles(prev => reset ? (data.articles || []) : [...prev, ...(data.articles || [])])
     setPage(p)
-    setPages(data.pages  || 1)
-    setTotal(data.total  || 0)
+    setPages(data.pages || 1)
+    setTotal(data.total || 0)
     setLoading(false)
   }, [topic, source, search])
 
-  // Reset to page 1 when filters change
   useEffect(() => { load(1, true) }, [load])
+
+  const countColor = dark ? '#475569' : '#94a3b8'
+  const loadMoreBg = dark ? '#1e293b' : '#f1f5f9'
+  const loadMoreColor = dark ? '#64748b' : '#94a3b8'
+  const loadMoreBorder = dark ? '#334155' : '#e2e8f0'
 
   return (
     <div>
-      <p className="text-xs text-gray-500 mb-4">{total} articles</p>
+      <p style={{ fontSize: 13, color: countColor, marginBottom: 16 }}>
+        {total.toLocaleString()} articles
+      </p>
 
-      <div className="flex flex-col gap-3">
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {articles.map(a => (
           <ArticleCard key={a.id} article={a} topics={topics} dark={dark} />
         ))}
       </div>
 
       {loading && (
-        <p className="text-center text-gray-500 text-sm mt-6">Loading...</p>
+        <div style={{ textAlign: 'center', padding: 24 }}>
+          <div style={{
+            width: 20, height: 20, borderRadius: '50%',
+            background: dark ? '#334155' : '#e2e8f0',
+            margin: '0 auto',
+            animation: 'pulse 1.5s ease-in-out infinite',
+          }} />
+        </div>
       )}
 
       {!loading && page < pages && (
         <button
           onClick={() => load(page + 1, false)}
-          className="mt-6 w-full py-2 rounded-lg bg-gray-800 text-gray-400 text-sm hover:bg-gray-700 transition-colors"
+          style={{
+            marginTop: 16, width: '100%', padding: '12px 0',
+            borderRadius: 10, fontSize: 13, fontWeight: 500,
+            background: loadMoreBg, color: loadMoreColor,
+            border: `1px solid ${loadMoreBorder}`,
+            cursor: 'pointer', fontFamily: 'inherit',
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = dark ? '#94a3b8' : '#64748b'}
+          onMouseLeave={e => e.currentTarget.style.color = loadMoreColor}
         >
           Load more
         </button>
       )}
 
       {!loading && articles.length === 0 && (
-        <p className="text-center text-gray-500 text-sm mt-12">No articles found.</p>
+        <p style={{ textAlign: 'center', color: countColor, fontSize: 13, marginTop: 48 }}>
+          No articles found.
+        </p>
       )}
+
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 0.4; transform: scale(0.9); }
+          50%       { opacity: 1;   transform: scale(1);   }
+        }
+      `}</style>
     </div>
   )
 }

@@ -4,100 +4,168 @@ import ArticleList from './components/ArticleList'
 import StatsPanel  from './components/StatsPanel'
 
 export default function App() {
-  const [topics,       setTopics]       = useState([])
-  const [sources,      setSources]      = useState([])
+  const [topics,         setTopics]         = useState([])
+  const [sources,        setSources]        = useState([])
   const [selectedTopic,  setSelectedTopic]  = useState(null)
   const [selectedSource, setSelectedSource] = useState(null)
-  const [search,       setSearch]       = useState('')
-  const [searchInput,  setSearchInput]  = useState('')
-  const [dark, setDark] = useState(true)
+  const [search,         setSearch]         = useState('')
+  const [searchInput,    setSearchInput]    = useState('')
+  const [dark,           setDark]           = useState(true)
+
+  useEffect(() => {
+    getTopics().then(d  => setTopics(d.topics   || []))
+    getSources().then(d => setSources(d.sources || []))
+  }, [])
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
   }, [dark])
 
   useEffect(() => {
-    getTopics().then(d  => setTopics(d.topics   || []))
-    getSources().then(d => setSources(d.sources  || []))
-  }, [])
-
-  // Debounce search input
-  useEffect(() => {
     const t = setTimeout(() => setSearch(searchInput), 300)
     return () => clearTimeout(t)
   }, [searchInput])
 
+  const bg      = dark ? '#0f172a' : '#f8fafc'
+  const navBg   = dark ? 'rgba(15,23,42,0.90)' : 'rgba(248,250,252,0.90)'
+  const border  = dark ? '#1e293b' : '#e2e8f0'
+  const text     = dark ? '#cbd5e1' : '#334155'
+  const subtext  = dark ? '#64748b' : '#94a3b8'
+  const chipIdle = dark ? { bg: '#1e293b', color: '#94a3b8', borderColor: '#334155' }
+                        : { bg: '#f1f5f9', color: '#64748b', borderColor: '#e2e8f0' }
+
   return (
-    <div className={`min-h-screen transition-colors ${dark ? 'bg-gray-950 text-gray-100' : 'bg-gray-50 text-gray-900'}`}>
-      {/* Header */}
-      <header className={`sticky top-0 z-10 border-b px-6 py-3 flex items-center gap-4 ${dark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
+    <div style={{ minHeight: '100vh', background: bg, color: text, fontFamily: "'DM Sans', system-ui, sans-serif", transition: 'background 0.2s, color 0.2s' }}>
+
+      {/* Google Font */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+      {/* Nav */}
+      <nav style={{
+        position: 'sticky', top: 0, zIndex: 50,
+        borderBottom: `1px solid ${border}`,
+        background: navBg,
+        backdropFilter: 'blur(12px)',
+        padding: '0 24px', height: 60,
+        display: 'flex', alignItems: 'center', gap: 16
+      }}>
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 8,
+            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '-0.3px'
+          }}>DN</div>
+          <span style={{ fontSize: 17, fontWeight: 600, color: dark ? '#f1f5f9' : '#0f172a', letterSpacing: '-0.4px' }}>
+            Daily News
+          </span>
+        </div>
+
+        {/* Search */}
+        <div style={{ flex: 1, maxWidth: 340, margin: '0 auto', position: 'relative' }}>
+          <svg style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }}
+            width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={text} strokeWidth="2">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Search articles..."
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            style={{
+              width: '100%',
+              background: dark ? '#1e293b' : '#f1f5f9',
+              border: `1px solid ${border}`,
+              borderRadius: 999,
+              padding: '8px 14px 8px 36px',
+              fontSize: 13,
+              color: text,
+              outline: 'none',
+            }}
+          />
+        </div>
+
+        {/* Theme toggle */}
         <button
           onClick={() => setDark(d => !d)}
-          className="ml-2 px-3 py-1.5 rounded-md bg-gray-800 text-sm text-gray-400 hover:bg-gray-700 transition-colors"
+          style={{
+            marginLeft: 'auto',
+            background: dark ? '#1e293b' : '#f1f5f9',
+            border: `1px solid ${border}`,
+            borderRadius: 8, padding: '6px 12px',
+            fontSize: 15, cursor: 'pointer', color: subtext,
+            transition: 'all 0.15s'
+          }}
         >
           {dark ? '☀️' : '🌙'}
         </button>
-        <h1 className="text-lg font-bold tracking-tight text-white">🗞 Daily News</h1>
-        <input
-          type="text"
-          placeholder="Search articles..."
-          value={searchInput}
-          onChange={e => setSearchInput(e.target.value)}
-          className="ml-auto w-64 rounded-md bg-gray-800 px-3 py-1.5 text-sm text-gray-100 placeholder-gray-500 outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </header>
+      </nav>
 
-      {/* Filter chips */}
-      <div className={`px-6 py-3 flex flex-wrap gap-2 border-b ${dark ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'}`}>
-        {/* Topic filters */}
-        <button
+      {/* Filter bar */}
+      <div style={{
+        padding: '12px 24px',
+        borderBottom: `1px solid ${border}`,
+        background: dark ? 'rgba(15,23,42,0.6)' : 'rgba(248,250,252,0.8)',
+        display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8
+      }}>
+        {/* Topic chips */}
+        <Chip
+          label="All Topics"
+          active={selectedTopic === null}
+          dark={dark}
+          accent="indigo"
           onClick={() => setSelectedTopic(null)}
-          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors
-            ${selectedTopic === null
-              ? 'bg-blue-600 text-white'
-              : dark ? 'bg-gray-800 text-gray-400 hover:bg-gray-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-        >
-          All Topics
-        </button>
+          chipIdle={chipIdle}
+        />
         {topics.map(t => (
-          <button
+          <Chip
             key={t.id}
+            label={t.name}
+            active={selectedTopic === t.id}
+            dark={dark}
+            accent="indigo"
             onClick={() => setSelectedTopic(selectedTopic === t.id ? null : t.id)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors
-              ${selectedTopic === t.id ? 'bg-blue-600 text-white' : 'bg-gray-800 text-gray-400 hover:bg-gray-700'}`}
-          >
-            {t.name}
-          </button>
+            chipIdle={chipIdle}
+          />
         ))}
 
         {/* Divider */}
-        {sources.length > 0 && (
-          <span className="w-px bg-gray-700 mx-1" />
-        )}
+        <div style={{ width: 1, height: 16, background: border, margin: '0 4px' }} />
 
-        {/* Source filters */}
-        <button
+        {/* Source chips */}
+        <Chip
+          label="All Sources"
+          active={selectedSource === null}
+          dark={dark}
+          accent="violet"
           onClick={() => setSelectedSource(null)}
-          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors
-            ${selectedSource === null ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-        >
-          All Sources
-        </button>
+          chipIdle={chipIdle}
+        />
         {sources.map(s => (
-          <button
+          <Chip
             key={s.id}
+            label={s.name}
+            active={selectedSource === s.id}
+            dark={dark}
+            accent="violet"
             onClick={() => setSelectedSource(selectedSource === s.id ? null : s.id)}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors
-              ${selectedSource === s.id ? 'bg-violet-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-          >
-            {s.name}
-          </button>
+            chipIdle={chipIdle}
+          />
         ))}
       </div>
 
-      {/* Main content */}
-      <div className="flex gap-6 px-6 py-6 max-w-screen-xl mx-auto">
-        <main className="flex-1 min-w-0">
+      {/* Main */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 288px',
+        gap: 24,
+        padding: '24px 28px',
+        maxWidth: 1400,
+        margin: '0 auto'
+      }}>
+        <main style={{ minWidth: 0 }}>
           <ArticleList
             topic={selectedTopic}
             source={selectedSource}
@@ -106,10 +174,37 @@ export default function App() {
             dark={dark}
           />
         </main>
-        <aside className="w-80 shrink-0 hidden lg:block">
-          <StatsPanel dark={dark} />
+        <aside>
+          <StatsPanel dark={dark} topics={topics} />
         </aside>
       </div>
     </div>
+  )
+}
+
+function Chip({ label, active, dark, accent, onClick, chipIdle }) {
+  const accentMap = {
+    indigo: { bg: 'rgba(99,102,241,0.15)', color: '#818cf8', border: 'rgba(99,102,241,0.3)' },
+    violet: { bg: 'rgba(124,58,237,0.15)', color: '#a78bfa', border: 'rgba(124,58,237,0.3)' },
+  }
+  const a = accentMap[accent]
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '5px 13px',
+        borderRadius: 999,
+        fontSize: 12,
+        fontWeight: 500,
+        cursor: 'pointer',
+        border: `1px solid ${active ? a.border : chipIdle.borderColor}`,
+        background: active ? a.bg : chipIdle.bg,
+        color: active ? a.color : chipIdle.color,
+        transition: 'all 0.15s',
+        fontFamily: 'inherit',
+      }}
+    >
+      {label}
+    </button>
   )
 }

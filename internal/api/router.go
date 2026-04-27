@@ -29,6 +29,8 @@ func NewRouter(pool *pgxpool.Pool, engine *scraper.Engine, apiKey string) *gin.E
 
 	r.GET("/api/sources", sources.List)
 
+	r.POST("/api/articles/:id/summarize", articles.Summarize)
+
 	r.GET("/api/health", func(c *gin.Context) {
 		if err := pool.Ping(c.Request.Context()); err != nil {
 			c.JSON(http.StatusServiceUnavailable, gin.H{

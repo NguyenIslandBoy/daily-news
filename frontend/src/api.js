@@ -31,3 +31,8 @@ export async function getStats() {
   const res = await fetch(`${BASE}/stats`)
   return res.json()
 }
+
+export async function summarizeArticle(id) {
+  const res = await fetch(`/api/articles/${id}/summarize`, { method: 'POST' })
+  return res.json()
+}

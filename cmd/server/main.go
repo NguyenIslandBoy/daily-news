@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"os"
 
@@ -46,8 +48,14 @@ func main() {
 	// HTTP server
 	router := api.NewRouter(pool, engine, cfg.APIKey)
 
+	srv := &http.Server{
+		Addr:         ":" + cfg.Port,
+		Handler:      router,
+		WriteTimeout: 6 * time.Minute,
+		ReadTimeout:  15 * time.Second,
+	}
 	log.Printf("Server starting on port %s", cfg.Port)
-	if err := router.Run(":" + cfg.Port); err != nil {
+	if err := srv.ListenAndServe(); err != nil {
 		log.Fatal(err)
 	}
 }

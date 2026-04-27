@@ -1,12 +1,15 @@
 package api
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/NguyenIslandBoy/daily-news/internal/db"
 	"github.com/NguyenIslandBoy/daily-news/internal/models"
+	"github.com/NguyenIslandBoy/daily-news/internal/summarizer"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -97,4 +100,30 @@ func (h *ArticlesHandler) Get(c *gin.Context) {
 		"article": article,
 		"related": related,
 	})
+}
+
+func (h *ArticlesHandler) Summarize(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid article id"})
+		return
+	}
+
+	article, err := db.GetArticleByID(h.pool, id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "article not found"})
+		return
+	}
+
+	// 60s context — Llama can be slow
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Minute)
+	defer cancel()
+
+	summary, err := summarizer.FetchAndSummarize(ctx, article.URL, article.Summary)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("summarization failed: %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"summary": summary})
 }
