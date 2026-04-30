@@ -36,3 +36,15 @@ export async function summarizeArticle(id) {
   const res = await fetch(`/api/articles/${id}/summarize`, { method: 'POST' })
   return res.json()
 }
+
+export async function createTopic(name, keywords, apiKey) {
+  const res = await fetch('/api/topics', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      // 'X-API-Key': apiKey,
+    },
+    body: JSON.stringify({ name, keywords }),
+  })
+  return res.json()
+}

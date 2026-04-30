@@ -10,6 +10,10 @@ import (
 )
 
 func GetTopics(pool *pgxpool.Pool) ([]models.Topic, error) {
+	// Debug: check search path
+	// var schema string
+	// pool.QueryRow(context.Background(), "SELECT current_schema()").Scan(&schema)
+	// log.Printf("Current schema: %s", schema)
 	rows, err := pool.Query(context.Background(),
 		`SELECT id, name, keywords, created_at FROM topics`)
 	if err != nil {

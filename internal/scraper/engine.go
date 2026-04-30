@@ -54,6 +54,14 @@ func (e *Engine) Start(ctx context.Context) {
 }
 
 func (e *Engine) runScrape() {
+	// Reload topics fresh each scrape — picks up newly added topics
+	topics, err := db.GetTopics(e.pool)
+	if err != nil {
+		log.Printf("Failed to reload topics: %v", err)
+	} else {
+		e.matcher = matcher.New(topics)
+	}
+
 	sources, err := db.GetActiveSources(e.pool)
 	if err != nil {
 		log.Printf("Failed to load sources: %v", err)

@@ -22,6 +22,6 @@ func (h *StatsHandler) Get(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch stats"})
 		return
 	}
-	c.Header("Cache-Control", "max-age=3600")
+	c.Header("Cache-Control", "max-age=60")
 	c.JSON(http.StatusOK, stats)
 }

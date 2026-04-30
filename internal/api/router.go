@@ -21,7 +21,7 @@ func NewRouter(pool *pgxpool.Pool, engine *scraper.Engine, apiKey string) *gin.E
 	r.GET("/api/articles/:id", articles.Get)
 
 	r.GET("/api/topics", topics.List)
-	r.POST("/api/topics", auth, topics.Create)
+	r.POST("/api/topics", topics.Create)
 	r.PUT("/api/topics/:id", auth, topics.Update)
 	r.DELETE("/api/topics/:id", auth, topics.Delete)
 

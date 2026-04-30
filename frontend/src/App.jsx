@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getTopics, getSources } from './api'
+import { getTopics, getSources, createTopic } from './api'
 import ArticleList from './components/ArticleList'
 import StatsPanel  from './components/StatsPanel'
 
@@ -11,6 +11,23 @@ export default function App() {
   const [search,         setSearch]         = useState('')
   const [searchInput,    setSearchInput]    = useState('')
   const [dark,           setDark]           = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [newName,   setNewName]   = useState('')
+  const [newKws,    setNewKws]    = useState('')  // comma-separated
+  const [apiKey,    setApiKey]    = useState('')
+  const [saving,    setSaving]    = useState(false)
+
+  async function handleAddTopic() {
+    if (!newName || !newKws) return
+    setSaving(true)
+    const keywords = newKws.split(',').map(k => k.trim()).filter(Boolean)
+    const data = await createTopic(newName, keywords)
+    if (data.topic) {
+      setTopics(prev => [...prev, { ...data.topic, article_count: 0 }])
+      setNewName(''); setNewKws(''); setShowModal(false)
+    }
+    setSaving(false)
+  }
 
   useEffect(() => {
     getTopics().then(d  => setTopics(d.topics   || []))
@@ -131,6 +148,24 @@ export default function App() {
           />
         ))}
 
+        {/* Add topics */}
+        <button
+          onClick={() => setShowModal(true)}
+          style={{
+            padding: '5px 13px', borderRadius: 999,
+            fontSize: 12, fontWeight: 500,
+            cursor: 'pointer', fontFamily: 'inherit',
+            background: 'none',
+            border: `1px dashed ${dark ? '#334155' : '#cbd5e1'}`,
+            color: dark ? '#475569' : '#94a3b8',
+            transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = '#818cf8'; e.currentTarget.style.color = '#818cf8' }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = dark ? '#334155' : '#cbd5e1'; e.currentTarget.style.color = dark ? '#475569' : '#94a3b8' }}
+        >
+          + New Topic
+        </button>
+
         {/* Divider */}
         <div style={{ width: 1, height: 16, background: border, margin: '0 4px' }} />
 
@@ -178,6 +213,83 @@ export default function App() {
           <StatsPanel dark={dark} topics={topics} />
         </aside>
       </div>
+      {/* Modal */}
+      {showModal && (
+        <div
+          onClick={() => setShowModal(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: dark ? '#1e293b' : '#ffffff',
+              border: `1px solid ${dark ? '#334155' : '#e2e8f0'}`,
+              borderRadius: 14, padding: 24, width: 360,
+              display: 'flex', flexDirection: 'column', gap: 14,
+            }}
+          >
+            <h3 style={{ fontSize: 15, fontWeight: 600, color: dark ? '#f1f5f9' : '#0f172a', margin: 0 }}>
+              Add New Topic
+            </h3>
+
+            {[
+              { label: 'Topic Name', value: newName, setter: setNewName, placeholder: 'e.g. DevOps' },
+              { label: 'Keywords (comma separated)', value: newKws, setter: setNewKws, placeholder: 'e.g. devops, kubernetes, ci/cd' },
+              // { label: 'API Key', value: apiKey, setter: setApiKey, placeholder: 'Your X-API-Key', type: 'password' },
+            ].map(({ label, value, setter, placeholder, type }) => (
+              <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                <label style={{ fontSize: 11, color: dark ? '#64748b' : '#94a3b8', fontWeight: 500 }}>{label}</label>
+                <input
+                  type={type || 'text'}
+                  value={value}
+                  onChange={e => setter(e.target.value)}
+                  placeholder={placeholder}
+                  style={{
+                    background: dark ? '#0f172a' : '#f8fafc',
+                    border: `1px solid ${dark ? '#334155' : '#e2e8f0'}`,
+                    borderRadius: 8, padding: '8px 10px',
+                    fontSize: 13, color: dark ? '#cbd5e1' : '#334155',
+                    outline: 'none', fontFamily: 'inherit',
+                  }}
+                />
+              </div>
+            ))}
+
+            <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+              <button
+                onClick={() => setShowModal(false)}
+                style={{
+                  flex: 1, padding: '8px 0', borderRadius: 8,
+                  fontSize: 13, fontWeight: 500, background: 'none',
+                  border: `1px solid ${dark ? '#334155' : '#e2e8f0'}`,
+                  color: dark ? '#64748b' : '#94a3b8',
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddTopic}
+                disabled={saving}
+                style={{
+                  flex: 1, padding: '8px 0', borderRadius: 8,
+                  fontSize: 13, fontWeight: 500,
+                  background: saving ? '#334155' : '#4f46e5',
+                  border: 'none', color: '#fff',
+                  cursor: saving ? 'default' : 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {saving ? 'Saving...' : 'Add Topic'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

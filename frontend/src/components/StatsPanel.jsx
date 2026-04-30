@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getStats } from '../api'
-import { Pie, Line } from 'react-chartjs-2'
+import { Doughnut, Pie, Line } from 'react-chartjs-2'
 import {
   Chart as ChartJS, ArcElement, Tooltip, Legend,
   CategoryScale, LinearScale, PointElement, LineElement, Filler
@@ -128,7 +128,7 @@ export default function StatsPanel({ dark = true, topics = [] }) {
             <div style={{ fontSize: 12, color: labelColor, marginBottom: 6, marginTop: 4 }}>
               Articles by Category
             </div>
-            <Pie data={pieData} options={pieOptions} width={252} height={100} />
+            <Doughnut data={pieData} options={pieOptions} width={252} height={100} />
           </>
         )}
 

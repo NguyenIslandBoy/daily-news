@@ -15,11 +15,12 @@ func GetStats(pool *pgxpool.Pool) (map[string]any, error) {
 		return nil, err
 	}
 
-	// By category
+	// By topic name instead of source category
 	rows, err := pool.Query(context.Background(), `
-		SELECT COALESCE(category, 'uncategorized'), count(*)
-		FROM articles
-		GROUP BY category`)
+		SELECT COALESCE(t.name, 'Untagged'), count(a.id)
+		FROM articles a
+		LEFT JOIN topics t ON t.id = a.topic_id
+		GROUP BY t.name`)
 	if err != nil {
 		return nil, err
 	}
