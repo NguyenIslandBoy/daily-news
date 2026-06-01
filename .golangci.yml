@@ -11,19 +11,12 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - gofmt
-    - goimports
     - misspell
     - noctx
     - bodyclose
     - unused
 
   settings:
-    gofmt:
-      simplify: true
-    goimports:
-      local-prefixes:
-        - github.com/NguyenIslandBoy/daily-news
     misspell:
       locale: US
     errcheck:
@@ -36,6 +29,17 @@ linters:
       - path: _test\.go
         linters:
           - errcheck
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+    goimports:
+      local-prefixes:
+        - github.com/NguyenIslandBoy/daily-news
 
 issues:
   max-issues-per-linter: 50
