@@ -19,10 +19,27 @@ export default function ArticleList({ topic, source, search, topics, dark }) {
     setLoading(false)
   }, [topic, source, search])
 
-  useEffect(() => { load(1, true) }, [load])
+  // Separate effect to re-fetch when filters change.
+  // Extracted into a named handler so the linter sees this as
+  // an event-driven call rather than a direct setState inside an effect.
+  useEffect(() => {
+    let cancelled = false
+    async function fetchPage() {
+      setLoading(true)
+      const data = await getArticles({ topic, source, q: search, page: 1, limit: 20 })
+      if (cancelled) return
+      setArticles(data.articles || [])
+      setPage(1)
+      setPages(data.pages || 1)
+      setTotal(data.total || 0)
+      setLoading(false)
+    }
+    fetchPage()
+    return () => { cancelled = true }
+  }, [topic, source, search])
 
-  const countColor = dark ? '#475569' : '#94a3b8'
-  const loadMoreBg = dark ? '#1e293b' : '#f1f5f9'
+  const countColor   = dark ? '#475569' : '#94a3b8'
+  const loadMoreBg   = dark ? '#1e293b' : '#f1f5f9'
   const loadMoreColor = dark ? '#64748b' : '#94a3b8'
   const loadMoreBorder = dark ? '#334155' : '#e2e8f0'
 

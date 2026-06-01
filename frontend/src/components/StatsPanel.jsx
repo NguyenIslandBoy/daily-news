@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getStats } from '../api'
-import { Doughnut, Pie, Line } from 'react-chartjs-2'
+import { Doughnut, Line } from 'react-chartjs-2'
 import {
   Chart as ChartJS, ArcElement, Tooltip, Legend,
   CategoryScale, LinearScale, PointElement, LineElement, Filler
@@ -89,10 +89,6 @@ export default function StatsPanel({ dark = true, topics = [] }) {
       y: { ticks: { color: tickColor, font: { size: 9 }, maxTicksLimit: 4 }, grid: { color: gridColor } },
     }
   }
-
-  const totalSources = stats.by_category
-    ? Object.values(stats.by_category).length
-    : 0
 
   return (
     <div style={{ position: 'sticky', top: 72, display: 'flex', flexDirection: 'column', gap: 12 }}>

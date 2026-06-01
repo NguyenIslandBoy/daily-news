@@ -37,12 +37,11 @@ export async function summarizeArticle(id) {
   return res.json()
 }
 
-export async function createTopic(name, keywords, apiKey) {
+export async function createTopic(name, keywords) {
   const res = await fetch('/api/topics', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      // 'X-API-Key': apiKey,
     },
     body: JSON.stringify({ name, keywords }),
   })

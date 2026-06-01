@@ -14,7 +14,6 @@ export default function App() {
   const [showModal, setShowModal] = useState(false)
   const [newName,   setNewName]   = useState('')
   const [newKws,    setNewKws]    = useState('')  // comma-separated
-  const [apiKey,    setApiKey]    = useState('')
   const [saving,    setSaving]    = useState(false)
 
   async function handleAddTopic() {
@@ -239,7 +238,6 @@ export default function App() {
             {[
               { label: 'Topic Name', value: newName, setter: setNewName, placeholder: 'e.g. DevOps' },
               { label: 'Keywords (comma separated)', value: newKws, setter: setNewKws, placeholder: 'e.g. devops, kubernetes, ci/cd' },
-              // { label: 'API Key', value: apiKey, setter: setApiKey, placeholder: 'Your X-API-Key', type: 'password' },
             ].map(({ label, value, setter, placeholder, type }) => (
               <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
                 <label style={{ fontSize: 11, color: dark ? '#64748b' : '#94a3b8', fontWeight: 500 }}>{label}</label>
