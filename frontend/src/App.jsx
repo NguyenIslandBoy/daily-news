@@ -292,7 +292,7 @@ export default function App() {
   )
 }
 
-function Chip({ label, active, dark, accent, onClick, chipIdle }) {
+function Chip({ label, active, accent, onClick, chipIdle }) {
   const accentMap = {
     indigo: { bg: 'rgba(99,102,241,0.15)', color: '#818cf8', border: 'rgba(99,102,241,0.3)' },
     violet: { bg: 'rgba(124,58,237,0.15)', color: '#a78bfa', border: 'rgba(124,58,237,0.3)' },
