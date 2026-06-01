@@ -6,23 +6,24 @@ version: "2"
 
 linters:
   enable:
-    - errcheck      # unchecked errors
-    - govet         # go vet
-    - ineffassign   # assignments never used
-    - staticcheck   # comprehensive static analysis (includes gosimple)
-    - gofmt         # formatting
-    - goimports     # import grouping/ordering
-    - misspell      # common spelling mistakes
-    - noctx         # http calls without context
-    - bodyclose     # response body not closed
-    - unused        # unused code
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - gofmt
+    - goimports
+    - misspell
+    - noctx
+    - bodyclose
+    - unused
 
-linters-settings:
+settings:
   gofmt:
     simplify: true
 
   goimports:
-    local-prefixes: github.com/NguyenIslandBoy/daily-news
+    local-prefixes:
+      - github.com/NguyenIslandBoy/daily-news
 
   misspell:
     locale: US
@@ -33,10 +34,10 @@ linters-settings:
       - (*os.File).Close
 
 issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-
   max-issues-per-linter: 50
   max-same-issues: 10
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
