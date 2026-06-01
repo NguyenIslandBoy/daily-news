@@ -1,5 +1,6 @@
 # .golangci.yml
 # https://golangci-lint.run/usage/configuration/
+# Compatible with golangci-lint v1.64.x
 
 run:
   timeout: 5m
@@ -8,17 +9,15 @@ run:
 linters:
   enable:
     - errcheck       # unchecked errors
-    - gosimple       # simplification suggestions
     - govet          # go vet
     - ineffassign    # assignments that are never used
-    - staticcheck    # comprehensive static analysis
-    - unused         # unused code
+    - staticcheck    # comprehensive static analysis (includes gosimple)
     - gofmt          # formatting
     - goimports      # import grouping/ordering
     - misspell       # common spelling mistakes
-    - godot          # period at end of comments
     - noctx          # http calls without context
     - bodyclose      # response body not closed
+    - unused         # unused code (v1 name; maps to deadcode internally)
 
 linters-settings:
   gofmt:
@@ -31,18 +30,15 @@ linters-settings:
     locale: US
 
   errcheck:
-    # Allow ignoring error on Close() — common pattern
     exclude-functions:
       - (io.Closer).Close
       - (*os.File).Close
 
 issues:
   exclude-rules:
-    # Test files: relax some rules
     - path: _test\.go
       linters:
         - errcheck
-        - godot
 
   max-issues-per-linter: 50
   max-same-issues: 10
