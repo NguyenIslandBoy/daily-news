@@ -46,12 +46,12 @@ func main() {
 	go engine.Start(ctx)
 
 	// HTTP server
-	router := api.NewRouter(pool, engine, cfg.APIKey)
+	router := api.NewRouter(pool, engine, cfg.APIKey, cfg.GroqAPIKey)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
 		Handler:      router,
-		WriteTimeout: 6 * time.Minute,
+		WriteTimeout: 30 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 	log.Printf("Server starting on port %s", cfg.Port)

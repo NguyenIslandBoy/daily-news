@@ -15,11 +15,12 @@ import (
 )
 
 type ArticlesHandler struct {
-	pool *pgxpool.Pool
+	pool       *pgxpool.Pool
+	groqAPIKey string
 }
 
-func NewArticlesHandler(pool *pgxpool.Pool) *ArticlesHandler {
-	return &ArticlesHandler{pool: pool}
+func NewArticlesHandler(pool *pgxpool.Pool, groqAPIKey string) *ArticlesHandler {
+	return &ArticlesHandler{pool: pool, groqAPIKey: groqAPIKey}
 }
 
 func (h *ArticlesHandler) List(c *gin.Context) {
@@ -115,11 +116,10 @@ func (h *ArticlesHandler) Summarize(c *gin.Context) {
 		return
 	}
 
-	// 60s context — Llama can be slow
-	ctx, cancel := context.WithTimeout(c.Request.Context(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	summary, err := summarizer.FetchAndSummarize(ctx, article.URL, article.Summary)
+	summary, err := summarizer.FetchAndSummarize(ctx, article.URL, article.Summary, h.groqAPIKey)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("summarization failed: %v", err)})
 		return

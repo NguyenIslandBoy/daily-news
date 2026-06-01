@@ -1,0 +1,152 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # ─────────────────────────────────────────────
+  # 1. Go — lint, test, build
+  # ─────────────────────────────────────────────
+  go:
+    name: Go
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dailynews_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/dailynews_test?sslmode=disable
+      DB_MIGRATE_URL: pgx5://postgres:postgres@localhost:5432/dailynews_test?sslmode=disable
+      PORT: 8082
+      API_KEY: ci-test-key
+      GROQ_API_KEY: ""
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Verify dependencies
+        run: go mod verify
+
+      - name: Run migrations
+        run: go run ./cmd/migrate
+
+      - name: Run tests
+        run: go test -v -race -count=1 ./...
+
+      - name: Build server binary
+        run: go build -o /dev/null ./cmd/server
+
+      - name: Build migrate binary
+        run: go build -o /dev/null ./cmd/migrate
+
+  # ─────────────────────────────────────────────
+  # 2. Go — static analysis
+  # ─────────────────────────────────────────────
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+
+  # ─────────────────────────────────────────────
+  # 3. Frontend — install, lint, build
+  # ─────────────────────────────────────────────
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+  # ─────────────────────────────────────────────
+  # 4. Docker — verify image builds cleanly
+  # ─────────────────────────────────────────────
+  docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+    # Only run if Go and frontend both pass
+    needs: [go, frontend]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build frontend first (Docker COPY expects ./static)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: npm ci + build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: daily-news:ci

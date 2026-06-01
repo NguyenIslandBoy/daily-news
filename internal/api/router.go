@@ -8,10 +8,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func NewRouter(pool *pgxpool.Pool, engine *scraper.Engine, apiKey string) *gin.Engine {
+func NewRouter(pool *pgxpool.Pool, engine *scraper.Engine, apiKey string, groqAPIKey string) *gin.Engine {
 	r := gin.Default()
 
-	articles := NewArticlesHandler(pool)
+	articles := NewArticlesHandler(pool, groqAPIKey)
 	topics := NewTopicsHandler(pool)
 	stats := NewStatsHandler(pool)
 	auth := APIKeyAuth(apiKey)

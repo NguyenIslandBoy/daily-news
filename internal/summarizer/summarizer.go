@@ -14,29 +14,29 @@ import (
 )
 
 const (
-	ollamaURL   = "http://localhost:11434/api/generate"
-	model       = "phi3.5:latest"
-	maxWords    = 800
-	httpTimeout = 5 * time.Minute
+	groqURL  = "https://api.groq.com/openai/v1/chat/completions"
+	model    = "llama-3.3-70b-versatile"
+	maxWords = 3000
 )
 
-var tagStripper = regexp.MustCompile(`<[^>]+>`)
+var (
+	tagStripper = regexp.MustCompile(`<[^>]+>`)
+	scriptStyle = regexp.MustCompile(`(?is)<(script|style)[^>]*>.*?</(script|style)>`)
+)
 
-// FetchAndSummarize fetches the article URL, extracts text, and summarizes it.
-// Falls back to existingSummary if fetch or summarization fails.
-func FetchAndSummarize(ctx context.Context, articleURL, existingSummary string) (string, error) {
-	log.Printf("Fetching URL: %s", articleURL)
+func FetchAndSummarize(ctx context.Context, articleURL, existingSummary, apiKey string) (string, error) {
+	// log.Printf("[summarizer] fetching %s", articleURL)
 	text, err := fetchText(articleURL)
 	if err != nil || len(strings.Fields(text)) < 100 {
-		// Not enough content — fall back to existing RSS summary
-		log.Printf("Fetch failed or too short, falling back to existing summary. err=%v words=%d", err, len(strings.Fields(text)))
+		// log.Printf("[summarizer] fetch failed or too short (err=%v words=%d), using existing summary", err, len(strings.Fields(text)))
 		if existingSummary != "" {
-			return summarize(ctx, existingSummary)
+			// log.Printf("[summarizer] summarizing existing summary via Groq")
+			return summarize(ctx, existingSummary, apiKey)
 		}
 		return "", fmt.Errorf("could not extract article text: %w", err)
 	}
-	log.Printf("Fetched %d words, sending to Phi 3.5", len(strings.Fields(text)))
-	return summarize(ctx, text)
+	// log.Printf("[summarizer] fetched %d words, sending to Groq", len(strings.Fields(text)))
+	return summarize(ctx, text, apiKey)
 }
 
 func fetchText(url string) (string, error) {
@@ -62,17 +62,10 @@ func fetchText(url string) (string, error) {
 		return "", err
 	}
 
-	// 1. Strip script and style blocks first
-	scriptStyle := regexp.MustCompile(`(?is)<(script|style)[^>]*>.*?</(script|style)>`)
 	cleaned := scriptStyle.ReplaceAllString(string(body), " ")
-
-	// 2. Strip remaining HTML tags
 	cleaned = tagStripper.ReplaceAllString(cleaned, " ")
-
-	// 3. Collapse whitespace
 	cleaned = strings.Join(strings.Fields(cleaned), " ")
 
-	// 4. NOW truncate to maxWords — this will be actual words now
 	words := strings.Fields(cleaned)
 	if len(words) > maxWords {
 		words = words[:maxWords]
@@ -81,22 +74,22 @@ func fetchText(url string) (string, error) {
 	return strings.Join(words, " "), nil
 }
 
-func summarize(ctx context.Context, text string) (string, error) {
-	log.Printf("Sending %d chars to Ollama...", len(text))
-
-	// Use a fresh context completely independent of request
-	ollamaCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	prompt := fmt.Sprintf(
-		"Summarize this article in 3 sentences. Be concise and factual. Article:\n\n%s",
-		text,
-	)
-
+func summarize(ctx context.Context, text, apiKey string) (string, error) {
+	log.Printf("[summarizer] calling Groq with %d chars", len(text))
 	payload := map[string]any{
-		"model":  model,
-		"prompt": prompt,
-		"stream": false,
+		"model": model,
+		"messages": []map[string]string{
+			{
+				"role":    "system",
+				"content": "You are a news summarizer. Summarize the following article in 4-5 concise sentences covering the key facts, main argument, and any important implications. Be factual and direct. No preamble.",
+			},
+			{
+				"role":    "user",
+				"content": text,
+			},
+		},
+		"max_tokens":  512,
+		"temperature": 0.3,
 	}
 
 	body, err := json.Marshal(payload)
@@ -104,33 +97,53 @@ func summarize(ctx context.Context, text string) (string, error) {
 		return "", err
 	}
 
-	client := &http.Client{Timeout: 5 * time.Minute}
-	req, err := http.NewRequestWithContext(ollamaCtx, "POST", ollamaURL, bytes.NewReader(body))
+	client := &http.Client{Timeout: 30 * time.Second}
+	req, err := http.NewRequestWithContext(ctx, "POST", groqURL, bytes.NewReader(body))
 	if err != nil {
 		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+apiKey)
 
-	log.Printf("Calling Ollama API...")
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Printf("Ollama call failed: %v", err)
-		return "", fmt.Errorf("ollama request failed: %w", err)
+		return "", fmt.Errorf("groq request failed: %w", err)
 	}
 	defer resp.Body.Close()
+	// log.Printf("[summarizer] Groq status: %d", resp.StatusCode)
 
-	log.Printf("Ollama responded, reading body...")
 	var result struct {
-		Response string `json:"response"`
-		Error    string `json:"error"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("ollama response parse failed: %w", err)
-	}
-	if result.Error != "" {
-		return "", fmt.Errorf("ollama error: %s", result.Error)
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+		Error struct {
+			Message string `json:"message"`
+		} `json:"error"`
 	}
 
-	log.Printf("Summary generated: %d chars", len(result.Response))
-	return strings.TrimSpace(result.Response), nil
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("groq HTTP %d: %s", resp.StatusCode, string(body))
+	}
+
+	if resp.StatusCode == 413 {
+		return "", fmt.Errorf("article too large for free tier — try a shorter article")
+	}
+	if resp.StatusCode == 429 {
+		return "", fmt.Errorf("rate limit hit — wait a moment and try again")
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("groq response parse failed: %w", err)
+	}
+	if result.Error.Message != "" {
+		return "", fmt.Errorf("groq error: %s", result.Error.Message)
+	}
+	if len(result.Choices) == 0 {
+		return "", fmt.Errorf("groq returned no choices")
+	}
+
+	return strings.TrimSpace(result.Choices[0].Message.Content), nil
 }

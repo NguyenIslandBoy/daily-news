@@ -15,6 +15,7 @@ type Config struct {
 	NYTAPIKey      string
 	RedditClientID string
 	RedditSecret   string
+	GroqAPIKey     string
 }
 
 func Load() *Config {
@@ -31,6 +32,7 @@ func Load() *Config {
 		NYTAPIKey:      os.Getenv("NYT_API_KEY"),
 		RedditClientID: os.Getenv("REDDIT_CLIENT_ID"),
 		RedditSecret:   os.Getenv("REDDIT_SECRET"),
+		GroqAPIKey:     os.Getenv("GROQ_API_KEY"),
 	}
 
 	if cfg.DatabaseURL == "" {
