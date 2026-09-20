@@ -26,7 +26,7 @@ var (
 
 func FetchAndSummarize(ctx context.Context, articleURL, existingSummary, apiKey string) (string, error) {
 	// log.Printf("[summarizer] fetching %s", articleURL)
-	text, err := fetchText(articleURL)
+	text, err := fetchText(ctx, articleURL)
 	if err != nil || len(strings.Fields(text)) < 100 {
 		// log.Printf("[summarizer] fetch failed or too short (err=%v words=%d), using existing summary", err, len(strings.Fields(text)))
 		if existingSummary != "" {
@@ -39,9 +39,9 @@ func FetchAndSummarize(ctx context.Context, articleURL, existingSummary, apiKey 
 	return summarize(ctx, text, apiKey)
 }
 
-func fetchText(url string) (string, error) {
+func fetchText(ctx context.Context, url string) (string, error) {
 	client := &http.Client{Timeout: 15 * time.Second}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return "", err
 	}

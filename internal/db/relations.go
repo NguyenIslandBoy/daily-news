@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/NguyenIslandBoy/daily-news/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/NguyenIslandBoy/daily-news/internal/models"
 )
 
 // FindCandidateIDs returns IDs of articles related to the given article

@@ -3,8 +3,9 @@ package db
 import (
 	"context"
 
-	"github.com/NguyenIslandBoy/daily-news/internal/models"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/NguyenIslandBoy/daily-news/internal/models"
 )
 
 func GetActiveSources(pool *pgxpool.Pool) ([]models.Source, error) {

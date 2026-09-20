@@ -3,10 +3,11 @@ package api
 import (
 	"net/http"
 
-	"github.com/NguyenIslandBoy/daily-news/internal/db"
-	"github.com/NguyenIslandBoy/daily-news/internal/models"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/NguyenIslandBoy/daily-news/internal/db"
+	"github.com/NguyenIslandBoy/daily-news/internal/models"
 )
 
 type SourcesHandler struct {

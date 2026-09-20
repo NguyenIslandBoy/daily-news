@@ -3,9 +3,10 @@ package api
 import (
 	"net/http"
 
-	"github.com/NguyenIslandBoy/daily-news/internal/scraper"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/NguyenIslandBoy/daily-news/internal/scraper"
 )
 
 func NewRouter(pool *pgxpool.Pool, engine *scraper.Engine, apiKey string, groqAPIKey string) *gin.Engine {
