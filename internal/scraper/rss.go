@@ -5,8 +5,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/NguyenIslandBoy/daily-news/internal/models"
 	"github.com/mmcdole/gofeed"
+
+	"github.com/NguyenIslandBoy/daily-news/internal/models"
 )
 
 func fetchRSS(source models.Source) ([]models.Article, error) {

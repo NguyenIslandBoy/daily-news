@@ -6,11 +6,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/robfig/cron/v3"
+
 	"github.com/NguyenIslandBoy/daily-news/internal/db"
 	"github.com/NguyenIslandBoy/daily-news/internal/matcher"
 	"github.com/NguyenIslandBoy/daily-news/internal/models"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/robfig/cron/v3"
 )
 
 type Engine struct {
@@ -38,9 +39,11 @@ func (e *Engine) LastScrape() time.Time {
 func (e *Engine) Start(ctx context.Context) {
 	c := cron.New()
 
-	c.AddFunc("*/15 * * * *", func() {
+	if _, err := c.AddFunc("*/15 * * * *", func() {
 		e.runScrape()
-	})
+	}); err != nil {
+		log.Printf("Failed to schedule periodic scrape: %v", err)
+	}
 
 	c.Start()
 	log.Println("Scraper started — runs every 15 minutes")
@@ -118,8 +121,11 @@ func (e *Engine) scrapeSource(source models.Source) {
 			if err != nil {
 				log.Printf("[%s] Relations error: %v", source.Name, err)
 			} else if len(relatedIDs) > 0 {
-				db.InsertRelations(e.pool, id, relatedIDs)
-				log.Printf("[%s] %d relations inserted for article %d", source.Name, len(relatedIDs), id)
+				if err := db.InsertRelations(e.pool, id, relatedIDs); err != nil {
+					log.Printf("[%s] Relations insert error: %v", source.Name, err)
+				} else {
+					log.Printf("[%s] %d relations inserted for article %d", source.Name, len(relatedIDs), id)
+				}
 			}
 		}
 

@@ -7,11 +7,12 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	"github.com/NguyenIslandBoy/daily-news/internal/db"
 	"github.com/NguyenIslandBoy/daily-news/internal/models"
 	"github.com/NguyenIslandBoy/daily-news/internal/summarizer"
-	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type ArticlesHandler struct {

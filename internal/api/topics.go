@@ -4,9 +4,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/NguyenIslandBoy/daily-news/internal/db"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/NguyenIslandBoy/daily-news/internal/db"
 )
 
 type TopicsHandler struct {
